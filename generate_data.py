@@ -438,7 +438,7 @@ class NoiseGenerator(object):
 
 def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
               low_frequency_cutoff=15, sample_rate=2048,
-              filter_duration=128, min_segment_duration=7200,
+              filter_duration=128, min_segment_duration=20,
               slide_buffer=240, real_noise_path=None,
               generate_duration=3600, segment_path=None,
               detectors=['H1', 'L1'], store=None, force=False):
