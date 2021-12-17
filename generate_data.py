@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""A program to generate test-data for the MLGWSC-1.
+""" 
+Modified generate_data.py using MLGWSC-1 code to create training dataset 
+Modified by nnarenraju on Dec 15th, 2021
 """
 import argparse
 import numpy as np
@@ -25,9 +27,6 @@ from pycbc import DYN_RANGE_FAC
 
 from segments import OverlapSegment, SegmentList
 import ligo.segments
-
-TIME_STEP = 24
-TIME_WINDOW = 6
 
 def check_file_existence(fpath, force, delete=False):
     if fpath is not None:
@@ -637,8 +636,9 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             fp.attrs['padding_end'] = padding_end
         return
 
-def main(doc):
-    parser = argparse.ArgumentParser(description=doc)
+# Modification by nnarenraju (raw_args given when called from make_dataset)
+def main(raw_args):
+    parser = argparse.ArgumentParser(description="Modified generate_data.py for training")
     
     parser.add_argument('-d', '--data-set', type=int, choices=[1, 2, 3, 4], default=1,
                         help="The data set type that should be generated. "
@@ -667,6 +667,19 @@ def main(doc):
                               "noise without additive signals. If this "
                               "option is not specified no background "
                               "data will be generated and stored."))
+    
+    # Modification by nnarenraju Dec 15th, 2021
+    parser.add_argument('-seg', '--input-segments-file', type=str,
+                        help=("Path where segments.csv is stored"))
+    parser.add_argument('--time-step', type=int, default=20,
+                        help=("Time step given to pycbc_create_injections"))
+    parser.add_argument('--time-window-llimit', type=float,
+                        help=("Lower limit on time window to place 'tc'"))
+    parser.add_argument('--time-window-ulimit', type=float,
+                        help=("Upper limit on time window to place 'tc'"))
+    parser.add_argument('--segment-gap', type=int, default=20,
+                        help=("Gap b/w adjacent equal length segments"))
+    
     
     parser.add_argument('-s', '--seed', type=int, default=0,
                         help=("The seed to use for data generation. "
@@ -702,7 +715,7 @@ def main(doc):
     parser.add_argument('--force', action='store_true',
                         help="Overwrite existing files.")
     
-    args = parser.parse_args()
+    args = parser.parse_args(raw_args)
     
     #Setup logging
     log_level = logging.INFO if args.verbose else logging.WARN
@@ -756,6 +769,7 @@ def main(doc):
             logging.info('Getting noise')
             get_noise(args.data_set, start_offset=args.start_offset,
                       duration=args.duration, seed=args.seed,
+                      segment_path=args.input_segments_file,
                       store=args.output_background_file, force=args.force)
         
         segs = load_segments()
@@ -773,8 +787,10 @@ def main(doc):
             cmd += ['--config-files', str(inj_config_paths[args.data_set])]
             cmd += ['--gps-start-time', str(tstart)]
             cmd += ['--gps-end-time', str(tend)]
-            cmd += ['--time-step', str(TIME_STEP)]
-            cmd += ['--time-window', str(TIME_WINDOW)]
+            cmd += ['--time-step', str(args.time_step)]
+            cmd += ['--time-window-llimit', str(args.time_window_llimit)]
+            cmd += ['--time-window-ulimit', str(args.time_window_ulimit)]
+            cmd += ['--segment-gap', str(args.segment_gap)]
             cmd += ['--seed', str(args.seed)]
             if args.output_injection_file is None:
                 args.injection_file = os.path.join(base_path(),
