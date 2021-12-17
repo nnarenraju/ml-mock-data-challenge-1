@@ -211,6 +211,7 @@ def store_ts(path, det, ts, force=False):
     if path is None:
         return
     
+    # Saves time series in path with HDF append mode
     group = f'{det}/{int(ts.start_time)}'
     ts.save(path, group=group)
 
@@ -522,7 +523,9 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                 logging.debug(f'Segment detectors are: {ret_seg.detectors}')
                 for det, ts in zip(ret_seg.detectors, data):
                     logging.debug(f'Storing time series of duration {ts.duration} for detector {det} at {store}')
+                    print(det)
                     store_ts(store, det, ts, force=force)
+                
                 with h5py.File(store, 'a') as fp:
                     fp.attrs['dataset'] = dataset
                     fp.attrs['start_offset'] = start_offset
@@ -541,6 +544,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             return return_segs.get_full_seglist(shift=False)
         else:
             return
+        
     elif dataset == 4:
         seglist = get_real_noise(path=real_noise_path,
                                  start_offset=start_offset,
@@ -571,7 +575,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
         raise ValueError(f'Unknown data set {dataset}')
 
 def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
-                    padding_end=0, store=None, force=False):
+                    padding_end=0, store=None, force=False, unique_dataset_id=None):
     """Inject waveforms into background.
     
     Arguments
@@ -610,14 +614,31 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
     injtable = injector.table
     
     ret = {}
-    for t in times:
+    if store is not None:
+        filename, extension = store.split('.')
+    
+    for n, t in enumerate(times):
+        # For each 't' in 'times' store the output in a separate HDF5 file
+        # So each signal will be stored in a separate file
+        if store is not None:
+            store = filename + f"_{n}" + f".{extension}"
+            
         for det in dets:
+            # However, one HDF5 file should contain signal from H1 and L1
+            # Do not separate this.
             if det not in ret:
                 ret[det] = []
             group = f'{det}/{t}'
             ts = load_timeseries(fpath, group=group)
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
+            
+            # check if there is one exact signal
+            if len(idxs) > 1:
+                raise ValueError("make_injections: Segment contains more than one signal!")
+            if len(idxs) == 0:
+                raise ValueError("make_injections: Segment contains zero signals!")
+                
             if len(idxs) > 0:
                 injector.apply(ts, det, f_lower=f_lower,
                                simulation_ids=list(idxs))
@@ -625,16 +646,18 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             if store is None:
                 ret[det].append(ts)
     
-    if store is None:
-        return ret
-    else:
-        with h5py.File(store, 'a') as fp:
-            fp.attrs['background-file'] = fpath
-            fp.attrs['injection-file'] = injection_file
-            fp.attrs['f_lower'] = f_lower
-            fp.attrs['padding_start'] = padding_start
-            fp.attrs['padding_end'] = padding_end
-        return
+        if store is None:
+            return ret
+        else:
+            with h5py.File(store, 'a') as fp:
+                fp.attrs['unique_dataset_id'] = unique_dataset_id
+                fp.attrs['background-file'] = fpath
+                fp.attrs['injection-file'] = injection_file
+                fp.attrs['f_lower'] = f_lower
+                fp.attrs['padding_start'] = padding_start
+                fp.attrs['padding_end'] = padding_end
+            return
+
 
 # Modification by nnarenraju (raw_args given when called from make_dataset)
 def main(raw_args):
@@ -679,6 +702,8 @@ def main(raw_args):
                         help=("Upper limit on time window to place 'tc'"))
     parser.add_argument('--segment-gap', type=int, default=20,
                         help=("Gap b/w adjacent equal length segments"))
+    parser.add_argument('--unique-dataset-id', type=str, default="lost",
+                        help=("Unique dataset ID created in make_dataset.py"))
     
     
     parser.add_argument('-s', '--seed', type=int, default=0,
@@ -804,6 +829,7 @@ def main(raw_args):
             if args.force:
                 cmd += ['--force']
             subprocess.call(cmd)
+            
         elif args.output_injection_file is not None:
             #Copy injection file
             copy(args.injection_file, args.output_injection_file)
@@ -824,7 +850,8 @@ def main(raw_args):
                         padding_start=30,
                         padding_end=30,
                         store=args.output_foreground_file,
-                        force=args.force)
+                        force=args.force,
+                        unique_dataset_id = args.unique_dataset_id)
         
         with h5py.File(args.output_background_file, 'r') as bgfile:
             with h5py.File(args.output_foreground_file, 'a') as fgfile:
