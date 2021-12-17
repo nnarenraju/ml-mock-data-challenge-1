@@ -441,7 +441,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
               filter_duration=128, min_segment_duration=20,
               slide_buffer=240, real_noise_path=None,
               generate_duration=3600, segment_path=None,
-              detectors=['H1', 'L1'], store=None, force=False):
+              detectors=['H1', 'L1'], store=None, force=False, unique_dataset_id=None):
     """A function to generate real or fake noise.
     
     Arguments
@@ -534,6 +534,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                     store_ts(store, det, ts, force=force)
                 
                 with h5py.File(store, 'a') as fp:
+                    fp.attrs['unique_dataset_id'] = unique_dataset_id
                     fp.attrs['dataset'] = dataset
                     fp.attrs['start_offset'] = start_offset
                     fp.attrs['duration'] = duration
@@ -546,6 +547,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                     fp.attrs['slide_buffer'] = slide_buffer
                     fp.attrs['segment_path'] = segment_path if segment_path is not None else 'None'
                     fp.attrs['detectors'] = detectors
+                    
             gc.collect()
         if store is None:
             return return_segs.get_full_seglist(shift=False)
@@ -803,7 +805,8 @@ def main(raw_args):
             get_noise(args.data_set, start_offset=args.start_offset,
                       duration=args.duration, seed=args.seed,
                       segment_path=args.input_segments_file,
-                      store=args.output_background_file, force=args.force)
+                      store=args.output_background_file, force=args.force,
+                      unique_dataset_id=args.unique_dataset_id)
         
         segs = load_segments()
         tstart, tend = segs.extent()
