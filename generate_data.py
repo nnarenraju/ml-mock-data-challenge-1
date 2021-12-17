@@ -625,6 +625,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
     ret = {}
     if store is not None:
         filename, extension = store.split('.')
+        filename_noise, extension_noise = fpath.split('.')
     
     for n, t in enumerate(times):
         # For each 't' in 'times' store the output in a separate HDF5 file
@@ -638,6 +639,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             if det not in ret:
                 ret[det] = []
             group = f'{det}/{t}'
+            fpath = filename_noise + f"_{n}" + f".{extension_noise}"
             ts = load_timeseries(fpath, group=group)
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
