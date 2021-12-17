@@ -506,7 +506,10 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                                  sample_rate=sample_rate,
                                  low_frequency_cutoff=low_frequency_cutoff,
                                  detectors=detectors)
-        for seg in segments:
+        
+        if store is not None:
+            filename, extension = store.split('.')
+        for n, seg in enumerate(segments):
             logging.debug(f'Now processing segment {seg} of duration {seg[1] - seg[0]} and generating noise for that')
             noise = noi_gen(seg[0], seg[1],
                             generate_duration=generate_duration)
@@ -518,12 +521,16 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             if store is None:
                 return_segs.add_segment(ret_seg)
             else:
+                # Change the store_path for background file
+                # Each segment is stored is separate HDF5 file
+                if store is not None:
+                    store = filename + f"_{n}" + f".{extension}"
+                
                 logging.debug(f'Trying to store data to file {store}')
                 data = ret_seg.get(shift=False)
                 logging.debug(f'Segment detectors are: {ret_seg.detectors}')
                 for det, ts in zip(ret_seg.detectors, data):
                     logging.debug(f'Storing time series of duration {ts.duration} for detector {det} at {store}')
-                    print(det)
                     store_ts(store, det, ts, force=force)
                 
                 with h5py.File(store, 'a') as fp:
@@ -642,6 +649,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             if len(idxs) > 0:
                 injector.apply(ts, det, f_lower=f_lower,
                                simulation_ids=list(idxs))
+                
             store_ts(store, det, ts, force=force)
             if store is None:
                 ret[det].append(ts)
