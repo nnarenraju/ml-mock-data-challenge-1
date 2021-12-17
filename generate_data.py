@@ -712,7 +712,7 @@ def main(raw_args):
                         help=("Lower limit on time window to place 'tc'"))
     parser.add_argument('--time-window-ulimit', type=float,
                         help=("Upper limit on time window to place 'tc'"))
-    parser.add_argument('--segment-gap', type=int, default=20,
+    parser.add_argument('--segment-gap', type=int, default=1,
                         help=("Gap b/w adjacent equal length segments"))
     parser.add_argument('--unique-dataset-id', type=str, default="lost",
                         help=("Unique dataset ID created in make_dataset.py"))
