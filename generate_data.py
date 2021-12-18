@@ -659,6 +659,8 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             if len(idxs) > 1:
                 raise ValueError("make_injections: Segment contains more than one signal!")
             if len(idxs) == 0:
+                print(f"Error: No injections found in file {store}")
+                print(f"Start time = {ts.start_time} and end time = {ts.end_time}")
                 raise ValueError("make_injections: Segment contains zero signals!")
                 
             if len(idxs) > 0:
