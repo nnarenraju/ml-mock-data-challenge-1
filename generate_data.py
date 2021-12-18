@@ -636,7 +636,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
         dets = list(fp.keys())
     
     # Get times from times.csv
-    times = np.loadtxt("times.csv", delimiter=",")
+    times = np.loadtxt("times.csv", delimiter=",", dtype=np.int32)
     
     for n, t in enumerate(times):
         # For each 't' in 'times' store the output in a separate HDF5 file
