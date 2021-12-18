@@ -655,6 +655,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
             
+            print(injtable['tc'])
             # check if there is one exact signal
             if len(idxs) > 1:
                 raise ValueError("make_injections: Segment contains more than one signal!")
