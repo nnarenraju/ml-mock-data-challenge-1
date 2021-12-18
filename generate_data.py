@@ -561,7 +561,6 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             store = filename + "_0" + f"{extension}"
             with h5py.File(store, 'a') as fp:
                 fp.attrs['times'] = times
-                
             return
         
     elif dataset == 4:
@@ -626,11 +625,6 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
         background segments plus the added injections.
     """
     
-    # store times in get_noise instead of reading background file
-    with h5py.File(fpath, 'r') as fp:
-        dets = list(fp.keys())
-        times = list(fp[dets[0]].keys())
-    
     injector = InjectionSet(injection_file)
     injtable = injector.table
     
@@ -638,6 +632,11 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
     if store is not None:
         filename, extension = os.path.splitext(store)
         filename_noise, extension_noise = os.path.splitext(fpath)
+    
+    # Times stored in first background file
+    with h5py.File(filename_noise + "_0" + extension_noise, 'r') as fp:
+        dets = list(fp.keys())
+        times = list(fp.attrs['times'])
     
     for n, t in enumerate(times):
         # For each 't' in 'times' store the output in a separate HDF5 file
