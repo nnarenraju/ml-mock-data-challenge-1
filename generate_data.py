@@ -664,7 +664,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 raise ValueError("make_injections: Segment contains zero signals!")
                 
             if len(idxs) > 0:
-                print(f"Applying injection to segment number {n}")
+                print(f"Applying injxection to segment number {n}")
                 injector.apply(ts, det, f_lower=f_lower, simulation_ids=list(idxs))
                 
             store_ts(store, det, ts, force=force)
@@ -672,7 +672,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 ret[det].append(ts)
     
         if store is None:
-            return ret
+            pass
         else:
             with h5py.File(store, 'a') as fp:
                 fp.attrs['unique_dataset_id'] = unique_dataset_id
@@ -681,7 +681,11 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 fp.attrs['f_lower'] = f_lower
                 fp.attrs['padding_start'] = padding_start
                 fp.attrs['padding_end'] = padding_end
-            return
+    
+    if store is None:
+        return ret
+    else:
+        return
 
 
 # Modification by nnarenraju (raw_args given when called from make_dataset)
