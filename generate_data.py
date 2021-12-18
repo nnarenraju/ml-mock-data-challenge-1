@@ -149,6 +149,10 @@ def restrict_segments(segments=None, start_offset=0, duration=2592000,
         A segment list containing the segments that sum up to the
         desired duration.
     """
+    
+    print(start_offset, duration, min_segment_duration, slide_buffer)
+    raise
+    
     if slide_buffer is None:
         slide_buffer = 0
     
