@@ -664,8 +664,8 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 raise ValueError("make_injections: Segment contains zero signals!")
                 
             if len(idxs) > 0:
-                injector.apply(ts, det, f_lower=f_lower,
-                               simulation_ids=list(idxs))
+                print(f"Applying injection to segment number {n}")
+                injector.apply(ts, det, f_lower=f_lower, simulation_ids=list(idxs))
                 
             store_ts(store, det, ts, force=force)
             if store is None:
