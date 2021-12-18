@@ -509,6 +509,8 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
         
         if store is not None:
             filename, extension = store.split('.')
+            
+        times = []
         for n, seg in enumerate(segments):
             logging.debug(f'Now processing segment {seg} of duration {seg[1] - seg[0]} and generating noise for that')
             noise = noi_gen(seg[0], seg[1],
@@ -516,6 +518,10 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             logging.debug(f"Finished generating this noise. It is of duration {noise['H1'].duration} and has {len(noise['H1'])} samples.")
             #TODO: Store these segments here
             ret_seg = OverlapSegment(duration=seg[1] - seg[0])
+            # Saving times for use in foreground
+            times.append(seg[0])
+            print(seg[0], seg[1])
+            
             for det in detectors:
                 ret_seg.add_timeseries((det, noise[det]))
             if store is None:
@@ -552,6 +558,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
         if store is None:
             return return_segs.get_full_seglist(shift=False)
         else:
+            raise
             return
         
     elif dataset == 4:
@@ -615,6 +622,8 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
         are lists containing PyCBC TimeSeries. The TimeSeries are the
         background segments plus the added injections.
     """
+    
+    # store times in get_noise instead of reading background file
     with h5py.File(fpath, 'r') as fp:
         dets = list(fp.keys())
         times = list(fp[dets[0]].keys())
