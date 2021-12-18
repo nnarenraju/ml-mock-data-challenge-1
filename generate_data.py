@@ -655,7 +655,6 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
             
-            print(injtable['tc'])
             # check if there is one exact signal
             if len(idxs) > 1:
                 raise ValueError("make_injections: Segment contains more than one signal!")
@@ -871,11 +870,14 @@ def main(raw_args):
                     os.remove(args.injection_file)
             return
         
+        # Changing the padding from 30 to 0
+        # This means that the 'tc' can be placed anywhere in the segment
+        # However, we control where it is being placed using the time window and timestep
         make_injections(args.output_background_file,
                         args.injection_file,
                         f_lower=20,
-                        padding_start=30,
-                        padding_end=30,
+                        padding_start=0,
+                        padding_end=0,
                         store=args.output_foreground_file,
                         force=args.force,
                         unique_dataset_id = args.unique_dataset_id)
