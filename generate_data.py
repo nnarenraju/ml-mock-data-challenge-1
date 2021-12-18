@@ -520,7 +520,6 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             ret_seg = OverlapSegment(duration=seg[1] - seg[0])
             # Saving times for use in foreground
             times.append(seg[0])
-            print(seg[0], seg[1])
             
             for det in detectors:
                 ret_seg.add_timeseries((det, noise[det]))
@@ -555,10 +554,14 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                     fp.attrs['detectors'] = detectors
                     
             gc.collect()
+        
         if store is None:
             return return_segs.get_full_seglist(shift=False)
         else:
-            raise
+            store = filename + "_0" + f"{extension}"
+            with h5py.File(store, 'a') as fp:
+                fp.attrs['times'] = times
+                
             return
         
     elif dataset == 4:
