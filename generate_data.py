@@ -92,20 +92,13 @@ def load_segments(path=None):
         path = os.path.join(base_path(), 'segments.csv')
     #Download data if it does not exist
     if not os.path.isfile(path):
-        url = 'https://www.atlas.aei.uni-hannover.de/work/marlin.schaefer/MDC/segments.csv'
-        response = requests.get(url)
-        with open(path, 'wb') as fp:
-            fp.write(response.content)
+        raise IOError(f"segments.csv does not exist in {path}")
     
     #Load data from CSV file
     segs = ligo.segments.segmentlist([])
-    with open(path, 'r') as fp:
-        reader = csv.reader(fp)
-        for i, row in enumerate(reader):
-            if i == 0:
-                continue
-            idx, start, end = row
-            segs.append(ligo.segments.segment([int(start), int(end)]))
+    segment_data = np.loadtxt(path, delimiter=",")
+    for start, end in segment_data[:, 1:]:
+        segs.append(ligo.segments.segment([int(start), int(end)]))
     
     return segs
 
@@ -149,9 +142,6 @@ def restrict_segments(segments=None, start_offset=0, duration=2592000,
         A segment list containing the segments that sum up to the
         desired duration.
     """
-    
-    print(start_offset, duration, min_segment_duration, slide_buffer)
-    raise
     
     if slide_buffer is None:
         slide_buffer = 0
