@@ -681,7 +681,6 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 fp.attrs['f_lower'] = f_lower
                 fp.attrs['padding_start'] = padding_start
                 fp.attrs['padding_end'] = padding_end
-            raise
             return
 
 
