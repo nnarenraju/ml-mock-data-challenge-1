@@ -7,7 +7,6 @@ import argparse
 import numpy as np
 import h5py
 import os
-import sys
 import logging
 import warnings
 from shutil import copy
@@ -20,8 +19,7 @@ import gc
 
 from pycbc.noise.reproduceable import colored_noise
 import pycbc.psd
-from pycbc.types import FrequencySeries, TimeSeries, \
-                        load_frequencyseries, load_timeseries
+from pycbc.types import TimeSeries, load_frequencyseries, load_timeseries
 from pycbc.inject import InjectionSet
 from pycbc import DYN_RANGE_FAC
 
@@ -335,7 +333,7 @@ class NoiseGenerator(object):
                  sample_rate=2048, low_frequency_cutoff=15,
                  detectors=['H1', 'L1']):
         if dataset not in [1, 2, 3]:
-            raise ValueError(f'PsdGenerator is only defined for datasets 1, 2, and 3.')
+            raise ValueError('PsdGenerator is only defined for datasets 1, 2, and 3.')
         self.dataset = dataset
         self.filter_duration = filter_duration
         self.sample_rate = sample_rate
@@ -353,18 +351,18 @@ class NoiseGenerator(object):
     def get(self, start, end, generate_duration=3600):
         keys = {}
         if self.dataset == 1:
-            logging.debug(f'Called with dataset 1')
+            logging.debug('Called with dataset 1')
             for det in self.detectors:
                 keys[det] = 'aLIGOZeroDetHighPower'
         elif self.dataset == 2:
-            logging.debug(f'Called with dataset 2')
+            logging.debug('Called with dataset 2')
             for det in self.detectors:
                 if self.fixed_psds[det] is None:
                     key = self.rs.randint(0, len(self.psd_options[det]))
                     self.fixed_psds[det] = self.psd_options[det][key]
                 keys[det] = self.fixed_psds[det]
         elif self.dataset == 3:
-            logging.debug(f'Called with dataset 3')
+            logging.debug('Called with dataset 3')
             for det in self.detectors:
                 key = self.rs.randint(0, len(self.psd_options[det]))
                 keys[det] = self.psd_options[det][key]
@@ -397,7 +395,7 @@ class NoiseGenerator(object):
             
             if generate_duration is None:
                 generate_duration = end - start
-                logging.debug(f'Generate duration was None')
+                logging.debug('Generate duration was None')
             logging.debug(f'Generate duration set to {generate_duration}')
             done_duration = 0
             noise = None
@@ -422,7 +420,7 @@ class NoiseGenerator(object):
                 tmp = tmp[:len(tmp)-int(pad * tmp.sample_rate)]
                 #End of workaround for sample-rate issue
                 
-                logging.debug(f'Succsessfully generated time domain noise')
+                logging.debug('Succsessfully generated time domain noise')
                 if noise is None:
                     logging.debug('Setting noise to tmp')
                     noise = tmp
@@ -516,7 +514,6 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             noise = noi_gen(seg[0], seg[1],
                             generate_duration=generate_duration)
             logging.debug(f"Finished generating this noise. It is of duration {noise['H1'].duration} and has {len(noise['H1'])} samples.")
-            #TODO: Store these segments here
             ret_seg = OverlapSegment(duration=seg[1] - seg[0])
             # Saving times for use in foreground
             times.append(seg[0])
@@ -664,7 +661,6 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 raise ValueError("make_injections: Segment contains zero signals!")
                 
             if len(idxs) > 0:
-                print(f"Applying injxection to segment number {n}")
                 injector.apply(ts, det, f_lower=f_lower, simulation_ids=list(idxs))
                 
             store_ts(store, det, ts, force=force)
@@ -685,7 +681,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
     if store is None:
         return ret
     else:
-        return
+        return len(times)
 
 
 # Modification by nnarenraju (raw_args given when called from make_dataset)
@@ -779,7 +775,7 @@ def main(raw_args):
     if args.output_injection_file is None and \
        args.output_background_file is None and \
        args.output_foreground_file is None:
-       raise ValueError(f'No options to store data were set.')
+       raise ValueError('No options to store data were set.')
     
     #Sanity checks of provided options
     if args.output_foreground_file is None:
@@ -816,98 +812,99 @@ def main(raw_args):
         args.seed = rs.randint(0, np.uint32(-1))
     
     tmp_inj = False
-    try:
-        #Generate noise background
-        if args.output_background_file is not None or \
-           args.output_foreground_file is not None:
-            logging.info('Getting noise')
-            get_noise(args.data_set, start_offset=args.start_offset,
-                      duration=args.duration, seed=args.seed,
-                      segment_path=args.input_segments_file,
-                      store=args.output_background_file, force=args.force,
-                      unique_dataset_id=args.unique_dataset_id)
+    
+    #Generate noise background
+    if args.output_background_file is not None or \
+       args.output_foreground_file is not None:
+        logging.info('Getting noise')
+        get_noise(args.data_set, start_offset=args.start_offset,
+                  duration=args.duration, seed=args.seed,
+                  segment_path=args.input_segments_file,
+                  store=args.output_background_file, force=args.force,
+                  unique_dataset_id=args.unique_dataset_id)
+    
+    segs = load_segments()
+    tstart, tend = segs.extent()
+    
+    #Take care of injections
+    if args.injection_file is None:
+        #Create injections
+        logging.info('Generating injections')
+        inj_config_paths = {1: os.path.join(base_path(), 'ds1.ini'),
+                            2: os.path.join(base_path(), 'ds2.ini'),
+                            3: os.path.join(base_path(), 'ds3.ini'),
+                            4: os.path.join(base_path(), 'ds4.ini')}
+        cmd = ['pycbc_create_injections']
+        cmd += ['--config-files', str(inj_config_paths[args.data_set])]
+        cmd += ['--gps-start-time', str(tstart)]
+        cmd += ['--gps-end-time', str(tend)]
+        cmd += ['--time-step', str(args.time_step)]
+        cmd += ['--time-window-llimit', str(args.time_window_llimit)]
+        cmd += ['--time-window-ulimit', str(args.time_window_ulimit)]
+        cmd += ['--segment-gap', str(args.segment_gap)]
+        cmd += ['--seed', str(args.seed)]
+        if args.output_injection_file is None:
+            args.injection_file = os.path.join(base_path(),
+                                               f'TMP-{time.time()}-INJ.hdf')
+            tmp_inj = True
+        else:
+            args.injection_file = args.output_injection_file
+        cmd += ['--output-file', args.injection_file]
+        if args.verbose:
+            cmd += ['--verbose']
+        if args.force:
+            cmd += ['--force']
+        subprocess.call(cmd)
         
-        segs = load_segments()
-        tstart, tend = segs.extent()
-        
-        #Take care of injections
-        if args.injection_file is None:
-            #Create injections
-            logging.info('Generating injections')
-            inj_config_paths = {1: os.path.join(base_path(), 'ds1.ini'),
-                                2: os.path.join(base_path(), 'ds2.ini'),
-                                3: os.path.join(base_path(), 'ds3.ini'),
-                                4: os.path.join(base_path(), 'ds4.ini')}
-            cmd = ['pycbc_create_injections']
-            cmd += ['--config-files', str(inj_config_paths[args.data_set])]
-            cmd += ['--gps-start-time', str(tstart)]
-            cmd += ['--gps-end-time', str(tend)]
-            cmd += ['--time-step', str(args.time_step)]
-            cmd += ['--time-window-llimit', str(args.time_window_llimit)]
-            cmd += ['--time-window-ulimit', str(args.time_window_ulimit)]
-            cmd += ['--segment-gap', str(args.segment_gap)]
-            cmd += ['--seed', str(args.seed)]
-            if args.output_injection_file is None:
-                args.injection_file = os.path.join(base_path(),
-                                                   f'TMP-{time.time()}-INJ.hdf')
-                tmp_inj = True
-            else:
-                args.injection_file = args.output_injection_file
-            cmd += ['--output-file', args.injection_file]
-            if args.verbose:
-                cmd += ['--verbose']
-            if args.force:
-                cmd += ['--force']
-            subprocess.call(cmd)
-            
-        elif args.output_injection_file is not None:
-            #Copy injection file
-            copy(args.injection_file, args.output_injection_file)
-        
-        if args.output_foreground_file is None:
-            logging.info('No output for the foreground file was specified. Skipping injections.')
-            if tmp_bg and args.output_background_file is not None:
-                if os.path.isfile(args.output_background_file):
-                    os.remove(args.output_background_file)
-            if tmp_inj and args.injection_file is not None:
-                if os.path.isfile(args.injection_file):
-                    os.remove(args.injection_file)
-            return
-        
-        # Changing the padding from 30 to 0
-        # This means that the 'tc' can be placed anywhere in the segment
-        # However, we control where it is being placed using the time window and timestep
-        make_injections(args.output_background_file,
-                        args.injection_file,
-                        f_lower=20,
-                        padding_start=0,
-                        padding_end=0,
-                        store=args.output_foreground_file,
-                        force=args.force,
-                        unique_dataset_id = args.unique_dataset_id)
-        
-        with h5py.File(args.output_background_file, 'r') as bgfile:
-            with h5py.File(args.output_foreground_file, 'a') as fgfile:
-                attrs = dict(bgfile.attrs)
-                for key, val in attrs.items():
-                    fgfile.attrs[key] = val
-        
-        logging.info(f'Saved foreground to {args.output_foreground_file}')
-    except Exception as e:
+    elif args.output_injection_file is not None:
+        #Copy injection file
+        copy(args.injection_file, args.output_injection_file)
+    
+    if args.output_foreground_file is None:
+        logging.info('No output for the foreground file was specified. Skipping injections.')
         if tmp_bg and args.output_background_file is not None:
             if os.path.isfile(args.output_background_file):
                 os.remove(args.output_background_file)
         if tmp_inj and args.injection_file is not None:
             if os.path.isfile(args.injection_file):
                 os.remove(args.injection_file)
-        raise e
+        return
+    
+    # Changing the padding from 30 to 0
+    # This means that the 'tc' can be placed anywhere in the segment
+    # However, we control where it is being placed using the time window and timestep
+    ninjections = make_injections(args.output_background_file,
+                                  args.injection_file,
+                                  f_lower=20,
+                                  padding_start=0,
+                                  padding_end=0,
+                                  store=args.output_foreground_file,
+                                  force=args.force,
+                                  unique_dataset_id = args.unique_dataset_id)
+    
+    # Setting particular filename and extension
+    bg_filename, bg_extension = os.path.splitext(args.output_background_file)
+    fg_filename, fg_extension = os.path.splitext(args.output_foreground_file)
+    
+    for n in range(ninjections):
+        bg_path = bg_filename + f"_{n}" + bg_extension
+        fg_path = fg_filename + f"_{n}" + fg_extension
+        with h5py.File(bg_path, 'r') as bgfile:
+            with h5py.File(fg_path, 'a') as fgfile:
+                attrs = dict(bgfile.attrs)
+                for key, val in attrs.items():
+                    fgfile.attrs[key] = val
+    
+    logging.info(f'Saved foreground to {args.output_foreground_file}')
+        
+        
     if tmp_bg and args.output_background_file is not None:
-        if os.path.isfile(args.output_background_file):
-            os.remove(args.output_background_file)
+        for n in range(ninjections):
+            if os.path.isfile(bg_filename + f"_{n}" + bg_extension):
+                os.remove(bg_filename + f"_{n}" + bg_extension)
     if tmp_inj and args.injection_file is not None:
         if os.path.isfile(args.injection_file):
             os.remove(args.injection_file)
-    return
 
 if __name__ == "__main__":
-    main(__doc__)
+    main()
