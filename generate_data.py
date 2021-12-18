@@ -631,8 +631,8 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
         filename, extension = os.path.splitext(store)
         filename_noise, extension_noise = os.path.splitext(fpath)
     
-    # Times stored in first background file
-    with h5py.File(filename_noise + extension_noise, 'r') as fp:
+    # Take data from first noise file
+    with h5py.File(filename_noise + "_0" + extension_noise, 'r') as fp:
         dets = list(fp.keys())
     
     # Get times from times.csv
