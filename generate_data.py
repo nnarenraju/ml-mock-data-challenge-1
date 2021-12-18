@@ -558,9 +558,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
         if store is None:
             return return_segs.get_full_seglist(shift=False)
         else:
-            store = filename + "_0" + f"{extension}"
-            with h5py.File(store, 'a') as fp:
-                fp.attrs['times'] = times
+            np.savetxt("times.csv", times, delimiter=",")
             return
         
     elif dataset == 4:
@@ -634,9 +632,11 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
         filename_noise, extension_noise = os.path.splitext(fpath)
     
     # Times stored in first background file
-    with h5py.File(filename_noise + "_0" + extension_noise, 'r') as fp:
+    with h5py.File(filename_noise + extension_noise, 'r') as fp:
         dets = list(fp.keys())
-        times = list(fp.attrs['times'])
+    
+    # Get times from times.csv
+    times = np.loadtxt("times.csv", delimiter=",")
     
     for n, t in enumerate(times):
         # For each 't' in 'times' store the output in a separate HDF5 file
@@ -681,6 +681,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 fp.attrs['f_lower'] = f_lower
                 fp.attrs['padding_start'] = padding_start
                 fp.attrs['padding_end'] = padding_end
+            raise
             return
 
 
