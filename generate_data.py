@@ -508,7 +508,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                                  detectors=detectors)
         
         if store is not None:
-            filename, extension = store.split('.')
+            filename, extension = os.path.splitext(store)
             
         times = []
         for n, seg in enumerate(segments):
@@ -530,7 +530,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
                 # Change the store_path for background file
                 # Each segment is stored is separate HDF5 file
                 if store is not None:
-                    store = filename + f"_{n}" + f".{extension}"
+                    store = filename + f"_{n}" + f"{extension}"
                 
                 logging.debug(f'Trying to store data to file {store}')
                 data = ret_seg.get(shift=False)
@@ -633,14 +633,14 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
     
     ret = {}
     if store is not None:
-        filename, extension = store.split('.')
-        filename_noise, extension_noise = fpath.split('.')
+        filename, extension = os.path.splitext(store)
+        filename_noise, extension_noise = os.path.splitext(fpath)
     
     for n, t in enumerate(times):
         # For each 't' in 'times' store the output in a separate HDF5 file
         # So each signal will be stored in a separate file
         if store is not None:
-            store = filename + f"_{n}" + f".{extension}"
+            store = filename + f"_{n}" + f"{extension}"
             
         for det in dets:
             # However, one HDF5 file should contain signal from H1 and L1
@@ -648,7 +648,7 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
             if det not in ret:
                 ret[det] = []
             group = f'{det}/{t}'
-            fpath = filename_noise + f"_{n}" + f".{extension_noise}"
+            fpath = filename_noise + f"_{n}" + f"{extension_noise}"
             ts = load_timeseries(fpath, group=group)
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
