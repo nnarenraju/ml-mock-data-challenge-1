@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """ 
-Modified generate_data.py using MLGWSC-1 code to create training dataset 
+Modified generate_data.py in MLGWSC-1 code to create training dataset 
 Modified by nnarenraju on Dec 15th, 2021
 """
 import argparse
@@ -14,7 +14,6 @@ import subprocess
 import time
 import requests
 import tqdm
-import csv
 import gc
 
 from pycbc.noise.reproduceable import colored_noise
@@ -581,7 +580,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
     else:
         raise ValueError(f'Unknown data set {dataset}')
 
-def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
+def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_start=0,
                     padding_end=0, store=None, force=False, unique_dataset_id=None):
     """Inject waveforms into background.
     
@@ -655,8 +654,15 @@ def make_injections(fpath, injection_file, f_lower=20, padding_start=0,
                 raise ValueError("make_injections: Segment contains zero signals!")
                 
             if len(idxs) > 0:
-                injector.apply(ts, det, f_lower=f_lower, simulation_ids=list(idxs))
-                
+                filename_signal, extension_signal = os.path.splitext(signal_path)
+                store = filename_signal + f"_{n}" + f"{extension_signal}"
+                save_params = {'save_path': signal_path,
+                               'group': group,
+                               'start_time': t,
+                               'delta_t': 1.0/2048.0}
+                injector.apply(ts, det, f_lower=f_lower, simulation_ids=list(idxs), 
+                               save_params=save_params)
+            
             store_ts(store, det, ts, force=force)
             if store is None:
                 ret[det].append(ts)
@@ -713,6 +719,8 @@ def main(raw_args):
     # Modification by nnarenraju Dec 15th, 2021
     parser.add_argument('-seg', '--input-segments-file', type=str,
                         help=("Path where segments.csv is stored"))
+    parser.add_argument('-seg', '--output-signal-file', type=str,
+                        help=("Path where signal_n.hdf will be stored"))
     parser.add_argument('--time-step', type=int, default=20,
                         help=("Time step given to pycbc_create_injections"))
     parser.add_argument('--time-window-llimit', type=float,
@@ -828,6 +836,7 @@ def main(raw_args):
                             2: os.path.join(base_path(), 'ds2.ini'),
                             3: os.path.join(base_path(), 'ds3.ini'),
                             4: os.path.join(base_path(), 'ds4.ini')}
+        
         cmd = ['pycbc_create_injections']
         cmd += ['--config-files', str(inj_config_paths[args.data_set])]
         cmd += ['--gps-start-time', str(tstart)]
@@ -869,6 +878,7 @@ def main(raw_args):
     # However, we control where it is being placed using the time window and timestep
     ninjections = make_injections(args.output_background_file,
                                   args.injection_file,
+                                  args.output_signal_file,
                                   f_lower=20,
                                   padding_start=0,
                                   padding_end=0,
