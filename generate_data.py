@@ -341,6 +341,7 @@ class NoiseGenerator(object):
         # Check seed
         if self.seed.count(self.seed[0]) == len(self.seed):
             print(self.seed)
+            print("Hello There!")
             raise ValueError("The seeds between two detectors are equal for noise generator!")
     
     def __call__(self, start, end, generate_duration=3600):
@@ -409,6 +410,8 @@ class NoiseGenerator(object):
                 duration = segend - segstart + 256
                 while 1 / (1 / (duration + pad)) != (duration + pad):
                     pad += 1
+                    
+                print(self.seed)
                 tmp = colored_noise(psd,
                                     segstart,
                                     segend+pad,
