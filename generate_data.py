@@ -719,7 +719,7 @@ def main(raw_args):
     # Modification by nnarenraju Dec 15th, 2021
     parser.add_argument('-seg', '--input-segments-file', type=str,
                         help=("Path where segments.csv is stored"))
-    parser.add_argument('-seg', '--output-signal-file', type=str,
+    parser.add_argument('-sig', '--output-signal-file', type=str,
                         help=("Path where signal_n.hdf will be stored"))
     parser.add_argument('--time-step', type=int, default=20,
                         help=("Time step given to pycbc_create_injections"))
