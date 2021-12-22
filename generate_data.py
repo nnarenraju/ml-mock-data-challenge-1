@@ -655,8 +655,8 @@ def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_star
                 
             if len(idxs) > 0:
                 filename_signal, extension_signal = os.path.splitext(signal_path)
-                store = filename_signal + f"_{n}" + f"{extension_signal}"
-                save_params = {'save_path': signal_path,
+                store_signal = filename_signal + f"_{n}" + f"{extension_signal}"
+                save_params = {'save_path': store_signal,
                                'group': group,
                                'start_time': t,
                                'delta_t': 1.0/2048.0}
