@@ -339,7 +339,8 @@ class NoiseGenerator(object):
         self.seed = list(self.rs.randint(0, 2**32, len(self.detectors)))
         
         # Check seed
-        if self.seed.count[self.seed[0]] == len(self.seed):
+        if self.seed.count(self.seed[0]) == len(self.seed):
+            print(self.seed)
             raise ValueError("The seeds between two detectors are equal for noise generator!")
     
     def __call__(self, start, end, generate_duration=3600):
