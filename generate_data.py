@@ -337,6 +337,10 @@ class NoiseGenerator(object):
         self.plen = int(self.sample_rate / self.delta_f) // 2 + 1
         self.rs = np.random.RandomState(seed=seed)
         self.seed = list(self.rs.randint(0, 2**32, len(self.detectors)))
+        
+        # Check seed
+        if self.seed.count[self.seed[0]] == len(self.seed):
+            raise ValueError("The seeds between two detectors are equal for noise generator!")
     
     def __call__(self, start, end, generate_duration=3600):
         return self.get(start, end, generate_duration=generate_duration)
