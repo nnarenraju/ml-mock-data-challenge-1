@@ -518,8 +518,7 @@ def get_noise(dataset, start_offset=0, duration=2592000, seed=0,
             else:
                 # Change the store_path for background file
                 # Each segment is stored is separate HDF5 file
-                if store is not None:
-                    store = filename + f"_{n}" + f"{extension}"
+                store = filename + f"_{n}" + f"{extension}"
                 
                 logging.debug(f'Trying to store data to file {store}')
                 data = ret_seg.get(shift=False)
