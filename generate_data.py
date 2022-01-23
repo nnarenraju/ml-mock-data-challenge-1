@@ -722,7 +722,6 @@ def main(raw_args):
     
     # Modification by nnarenraju Dec 15th, 2021
     # Verification done on January 16th, 2022 of previous changes
-    # Adding a test comment (minor untracked changes)
     parser.add_argument('-seg', '--input-segments-file', type=str,
                         help=("Path where segments.csv is stored"))
     parser.add_argument('-sig', '--output-signal-file', type=str,
