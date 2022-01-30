@@ -677,6 +677,8 @@ def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_star
         if store is None:
             pass
         else:
+            print(store)
+            raise
             with h5py.File(store, 'a') as fp:
                 fp.attrs['unique_dataset_id'] = unique_dataset_id
                 fp.attrs['background-file'] = fpath
