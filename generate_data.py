@@ -677,8 +677,6 @@ def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_star
         if store is None:
             pass
         else:
-            print(store)
-            raise
             with h5py.File(store, 'a') as fp:
                 fp.attrs['unique_dataset_id'] = unique_dataset_id
                 fp.attrs['background-file'] = fpath
@@ -911,6 +909,14 @@ def main(raw_args):
                 attrs = dict(bgfile.attrs)
                 for key, val in attrs.items():
                     fgfile.attrs[key] = val
+    
+    
+    with h5py.File(fg_path, 'r') as fgfile:
+        attrs = dict(fgfile.attrs)
+        for key, val in attrs.items():
+            print(f"{key} = {val}")
+    
+    raise
     
     logging.info(f'Saved foreground to {args.output_foreground_file}')
         
