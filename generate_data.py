@@ -910,14 +910,6 @@ def main(raw_args):
                 for key, val in attrs.items():
                     fgfile.attrs[key] = val
     
-    
-    with h5py.File(fg_path, 'r') as fgfile:
-        attrs = dict(fgfile.attrs)
-        for key, val in attrs.items():
-            print(f"{key} = {val}")
-    
-    raise
-    
     logging.info(f'Saved foreground to {args.output_foreground_file}')
         
         
