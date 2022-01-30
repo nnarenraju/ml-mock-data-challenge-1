@@ -649,7 +649,8 @@ def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_star
             idxs = np.where(np.logical_and(float(ts.start_time) + padding_start <= injtable['tc'],
                                            injtable['tc'] <= float(ts.end_time) - padding_end))[0]
             
-            print(injtable['tc'][idxs[0]])
+            # Time of coalescence
+            tc = injtable['tc'][idxs[0]]
             
             # check if there is one exact signal
             if len(idxs) > 1:
@@ -680,6 +681,9 @@ def make_injections(fpath, injection_file, signal_path, f_lower=20, padding_star
                 fp.attrs['unique_dataset_id'] = unique_dataset_id
                 fp.attrs['background-file'] = fpath
                 fp.attrs['injection-file'] = injection_file
+                fp.attrs['tc'] = tc
+                fp.attrs['start_time'] = t
+                fp.attrs['delta_t'] = 1.0/2048.0
                 fp.attrs['f_lower'] = f_lower
                 fp.attrs['padding_start'] = padding_start
                 fp.attrs['padding_end'] = padding_end
