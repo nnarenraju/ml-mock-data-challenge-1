@@ -836,8 +836,9 @@ def main(raw_args):
                   store=args.output_background_file, force=args.force,
                   unique_dataset_id=args.unique_dataset_id)
     
-    segs = load_segments()
+    segs = load_segments(path=args.input_segments_file)
     tstart, tend = segs.extent()
+    print("tstart = {} and tend = {}".format(tstart, tend))
     
     #Take care of injections
     if args.injection_file is None:
